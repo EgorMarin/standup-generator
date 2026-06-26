@@ -184,10 +184,6 @@
     margin-bottom: 10px;
   }
 
-  .field-group:last-child {
-    margin-bottom: 0;
-  }
-
   .add-btn {
     width: 100%;
     padding: 11px;
@@ -296,14 +292,9 @@
 <body>
 <div class="container">
   <header>
-    <h1>Daily standup</h1>
+    <h1>DAILY STANDUP <span style="font-weight:400; color:var(--text-muted)">by Yehor Marin</span></h1>
     <p>Fill in your tasks, then copy the result into Slack.</p>
   </header>
-
-  <div class="field-group" style="margin-bottom:28px">
-    <label class="field-label" for="name">Your name</label>
-    <input type="text" id="name" placeholder="Yehor Marin" />
-  </div>
 
   <p class="section-title">Tasks</p>
   <div id="tasks-container"></div>
@@ -361,18 +352,13 @@ function addTask(hasTicket = true) {
       <button class="remove-btn" onclick="removeTask(${id})" aria-label="Remove task">×</button>
     </div>
     <div id="ticket-fields-${id}" style="display:${hasTicket ? 'block' : 'none'}">
-      <div class="grid-2">
-        <div class="field-group">
-          <label class="field-label">Ticket number</label>
-          <input type="text" placeholder="DS-86" id="ticket-num-${id}" />
-        </div>
-        <div class="field-group">
-          <label class="field-label">Jira link</label>
-          <input type="text" placeholder="https://..." id="ticket-url-${id}" />
-        </div>
+      <div class="field-group">
+        <label class="field-label">Ticket number</label>
+        <input type="text" placeholder="112 or DS-86" id="ticket-num-${id}" oninput="handleTicketInput(${id}, this.value)" />
+        <span id="ticket-preview-${id}" style="font-size:12px; color:var(--text-faint); margin-top:2px; display:none;"></span>
       </div>
     </div>
-    <div class="field-group">
+    <div class="field-group" style="margin-top:10px; margin-bottom:10px">
       <label class="field-label">Description</label>
       <input type="text" placeholder="TextField component v1 migration" id="task-desc-${id}" />
     </div>
@@ -384,6 +370,25 @@ function addTask(hasTicket = true) {
     </div>
   `;
   document.getElementById('tasks-container').appendChild(div);
+}
+
+const JIRA_BASE = 'https://customink.atlassian.net/browse/';
+const JIRA_PREFIX = 'DS-';
+
+function resolveTicket(raw) {
+  if (!raw.trim()) return { num: '', url: '' };
+  const isNumOnly = /^\d+$/.test(raw.trim());
+  const num = isNumOnly ? JIRA_PREFIX + raw.trim() : raw.trim();
+  const url = JIRA_BASE + num;
+  return { num, url };
+}
+
+function handleTicketInput(id, value) {
+  const preview = document.getElementById('ticket-preview-' + id);
+  if (!value.trim()) { preview.style.display = 'none'; return; }
+  const { num, url } = resolveTicket(value);
+  preview.textContent = num + ' → ' + url;
+  preview.style.display = 'block';
 }
 
 function setType(id, hasTicket) {
@@ -398,7 +403,7 @@ function removeTask(id) {
 }
 
 function generate() {
-  const name = document.getElementById('name').value.trim() || 'Anonymous';
+  const name = document.getElementById('name') ? document.getElementById('name').value.trim() || 'Anonymous' : 'Yehor Marin';
   const blockers = document.getElementById('blockers').value.trim();
   const comments = document.getElementById('comments').value.trim();
   const taskBlocks = document.querySelectorAll('.card');
@@ -420,12 +425,12 @@ function generate() {
     const status = document.getElementById('task-status-' + id).value;
 
     if (hasTicket) {
-      const num = document.getElementById('ticket-num-' + id).value.trim();
-      const url = document.getElementById('ticket-url-' + id).value.trim();
+      const raw = document.getElementById('ticket-num-' + id).value.trim();
+      const { num, url } = resolveTicket(raw);
       const ticketLabel = num ? `[${num}]` : '';
       const descLine = [ticketLabel, desc].filter(Boolean).join(' ');
       lines.push(`• ${descLine || '—'} — ${status}`);
-      if (url) lines.push(`  ${url}`);
+      if (url && num) lines.push(`  ${url}`);
     } else {
       lines.push(`• ${desc || '—'} — ${status}`);
     }
