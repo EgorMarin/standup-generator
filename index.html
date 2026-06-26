@@ -477,8 +477,13 @@ function generate() {
 }
 
 function copyText() {
-  const text = document.getElementById('output').innerText;
-  navigator.clipboard.writeText(text).then(() => {
+  const outputEl = document.getElementById('output');
+  const html = outputEl.innerHTML;
+  const plain = outputEl.innerText;
+  const blob = new Blob([html], { type: 'text/html' });
+  const plainBlob = new Blob([plain], { type: 'text/plain' });
+  const item = new ClipboardItem({ 'text/html': blob, 'text/plain': plainBlob });
+  navigator.clipboard.write([item]).then(() => {
     const btn = document.getElementById('copy-btn');
     btn.textContent = '✓ Copied!';
     btn.classList.add('copied');
