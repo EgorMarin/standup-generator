@@ -306,11 +306,6 @@
 
   <hr class="divider" />
 
-  <div class="field-group" style="margin-bottom:16px">
-    <label class="field-label" for="blockers">Blockers</label>
-    <textarea id="blockers" placeholder="Waiting for design review on DS-86..."></textarea>
-  </div>
-
   <div class="field-group" style="margin-bottom:28px">
     <label class="field-label" for="comments">Comments</label>
     <textarea id="comments" placeholder="OOO tomorrow, handoff done..."></textarea>
@@ -333,8 +328,9 @@ const statusOptions = [
   '🔄 In Progress',
   '👀 In Review',
   '✅ Code Complete',
+  '🧪 Testing',
   '🚀 Done',
-  '🔁 Blocked',
+  '🚧 Blocked',
   '⏸ On Hold',
 ];
 
@@ -364,9 +360,13 @@ function addTask(hasTicket = true) {
     </div>
     <div class="field-group">
       <label class="field-label">Status</label>
-      <select id="task-status-${id}">
+      <select id="task-status-${id}" onchange="handleStatusChange(${id}, this.value)">
         ${statusOptions.map(s => `<option>${s}</option>`).join('')}
       </select>
+    </div>
+    <div class="field-group" id="task-blocker-wrap-${id}" style="display:none">
+      <label class="field-label">Blocker description</label>
+      <input type="text" placeholder="Waiting for design approval..." id="task-blocker-${id}" />
     </div>
   `;
   document.getElementById('tasks-container').appendChild(div);
@@ -391,6 +391,11 @@ function handleTicketInput(id, value) {
   preview.style.display = 'block';
 }
 
+function handleStatusChange(id, value) {
+  const wrap = document.getElementById('task-blocker-wrap-' + id);
+  if (wrap) wrap.style.display = value.includes('Blocked') ? 'block' : 'none';
+}
+
 function setType(id, hasTicket) {
   document.getElementById('ticket-fields-' + id).style.display = hasTicket ? 'block' : 'none';
   document.getElementById('ticket-btn-' + id).classList.toggle('active', hasTicket);
@@ -403,8 +408,6 @@ function removeTask(id) {
 }
 
 function generate() {
-  const name = document.getElementById('name') ? document.getElementById('name').value.trim() || 'Anonymous' : 'Yehor Marin';
-  const blockers = document.getElementById('blockers').value.trim();
   const comments = document.getElementById('comments').value.trim();
   const taskBlocks = document.querySelectorAll('.card');
 
@@ -413,44 +416,68 @@ function generate() {
     return;
   }
 
-  let lines = [];
-  lines.push(`👤 ${name}`);
-  lines.push('');
-  lines.push('📋 Tasks');
+  const outputEl = document.getElementById('output');
+  outputEl.innerHTML = '';
+
+  const addLine = (html) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    outputEl.appendChild(div);
+  };
+  const addText = (text) => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    outputEl.appendChild(div);
+  };
+  const addEmpty = () => outputEl.appendChild(document.createElement('div'));
 
   taskBlocks.forEach(block => {
     const id = block.id.replace('task-', '');
     const hasTicket = document.getElementById('ticket-btn-' + id).classList.contains('active');
     const desc = document.getElementById('task-desc-' + id).value.trim();
     const status = document.getElementById('task-status-' + id).value;
+    const taskBlockerEl = document.getElementById('task-blocker-' + id);
+    const taskBlocker = taskBlockerEl ? taskBlockerEl.value.trim() : '';
 
     if (hasTicket) {
       const raw = document.getElementById('ticket-num-' + id).value.trim();
       const { num, url } = resolveTicket(raw);
-      const ticketLabel = num ? `[${num}]` : '';
-      const descLine = [ticketLabel, desc].filter(Boolean).join(' ');
-      lines.push(`• ${descLine || '—'} — ${status}`);
-      if (url && num) lines.push(`  ${url}`);
+      const line = document.createElement('div');
+      if (num && url) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.textContent = num;
+        link.style.color = '#60a5fa';
+        line.appendChild(document.createTextNode('• ['));
+        line.appendChild(link);
+        line.appendChild(document.createTextNode(`]${desc ? ' ' + desc : ''} — ${status}`));
+      } else {
+        line.textContent = `• ${desc || '—'} — ${status}`;
+      }
+      outputEl.appendChild(line);
     } else {
-      lines.push(`• ${desc || '—'} — ${status}`);
+      addText(`• ${desc || '—'} — ${status}`);
     }
+
+    if (status.includes('Blocked') && taskBlocker) {
+      addText(`  ${taskBlocker}`);
+    }
+
+    addEmpty();
   });
 
-  lines.push('');
-  lines.push('🚧 Blockers');
-  lines.push(blockers || '—');
-  lines.push('');
-  lines.push('💬 Comments');
-  lines.push(comments || '—');
+  if (comments) {
+    addText('💬 Comments');
+    addText(comments);
+  }
 
-  const text = lines.join('\n');
-  document.getElementById('output').textContent = text;
   document.getElementById('output-wrap').style.display = 'block';
   document.getElementById('output-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function copyText() {
-  const text = document.getElementById('output').textContent;
+  const text = document.getElementById('output').innerText;
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.getElementById('copy-btn');
     btn.textContent = '✓ Copied!';
