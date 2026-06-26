@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Standup Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f1;
+    --surface: #ffffff;
+    --surface-alt: #f0efe9;
+    --border: #e2e0d8;
+    --border-strong: #ccc9bc;
+    --text: #1a1917;
+    --text-muted: #6b6860;
+    --text-faint: #9e9b91;
+    --accent: #2563eb;
+    --accent-bg: #eff4ff;
+    --accent-border: #bfcfff;
+    --danger: #dc2626;
+    --success-bg: #f0fdf4;
+    --success-text: #16a34a;
+    --success-border: #bbf7d0;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 48px 16px 80px;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 40px;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  header p {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  input[type="text"],
+  textarea,
+  select {
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 72px;
+    line-height: 1.6;
+  }
+
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6860' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .type-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--surface-alt);
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .type-btn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .type-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .remove-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .remove-btn:hover {
+    background: #fef2f2;
+    color: var(--danger);
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .field-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .add-btn {
+    width: 100%;
+    padding: 11px;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: none;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 32px;
+    transition: all 0.15s;
+  }
+
+  .add-btn:hover {
+    background: var(--surface);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-bottom: 12px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  .generate-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-bottom: 12px;
+  }
+
+  .generate-btn:hover { background: #1d4ed8; }
+
+  .output-wrap {
+    display: none;
+    margin-top: 16px;
+  }
+
+  .output-box {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .copy-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .copy-btn:hover { background: var(--surface-alt); }
+
+  .copy-btn.copied {
+    background: var(--success-bg);
+    color: var(--success-text);
+    border-color: var(--success-border);
+  }
+
+  @media (max-width: 480px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    body { padding: 32px 12px 60px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Daily standup</h1>
+    <p>Fill in your tasks, then copy the result into Slack.</p>
+  </header>
+
+  <div class="field-group" style="margin-bottom:28px">
+    <label class="field-label" for="name">Your name</label>
+    <input type="text" id="name" placeholder="Yehor Marin" />
+  </div>
+
+  <p class="section-title">Tasks</p>
+  <div id="tasks-container"></div>
+
+  <button class="add-btn" onclick="addTask()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    Add task
+  </button>
+
+  <hr class="divider" />
+
+  <div class="field-group" style="margin-bottom:16px">
+    <label class="field-label" for="blockers">Blockers</label>
+    <textarea id="blockers" placeholder="Waiting for design review on DS-86..."></textarea>
+  </div>
+
+  <div class="field-group" style="margin-bottom:28px">
+    <label class="field-label" for="comments">Comments</label>
+    <textarea id="comments" placeholder="OOO tomorrow, handoff done..."></textarea>
+  </div>
+
+  <button class="generate-btn" onclick="generate()">Generate message</button>
+
+  <div class="output-wrap" id="output-wrap">
+    <div class="output-box" id="output"></div>
+    <button class="copy-btn" id="copy-btn" onclick="copyText()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      Copy to clipboard
+    </button>
+  </div>
+</div>
+
+<script>
+let taskCount = 0;
+const statusOptions = [
+  '🔄 In Progress',
+  '👀 In Review',
+  '✅ Code Complete',
+  '🚀 Done',
+  '🔁 Blocked',
+  '⏸ On Hold',
+];
+
+function addTask(hasTicket = true) {
+  const id = ++taskCount;
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.id = 'task-' + id;
+  div.innerHTML = `
+    <div class="card-header">
+      <div class="type-toggle">
+        <button class="type-btn ${hasTicket ? 'active' : ''}" onclick="setType(${id}, true)" id="ticket-btn-${id}">Jira ticket</button>
+        <button class="type-btn ${!hasTicket ? 'active' : ''}" onclick="setType(${id}, false)" id="free-btn-${id}">No ticket</button>
+      </div>
+      <button class="remove-btn" onclick="removeTask(${id})" aria-label="Remove task">×</button>
+    </div>
+    <div id="ticket-fields-${id}" style="display:${hasTicket ? 'block' : 'none'}">
+      <div class="grid-2">
+        <div class="field-group">
+          <label class="field-label">Ticket number</label>
+          <input type="text" placeholder="DS-86" id="ticket-num-${id}" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Jira link</label>
+          <input type="text" placeholder="https://..." id="ticket-url-${id}" />
+        </div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Description</label>
+      <input type="text" placeholder="TextField component v1 migration" id="task-desc-${id}" />
+    </div>
+    <div class="field-group">
+      <label class="field-label">Status</label>
+      <select id="task-status-${id}">
+        ${statusOptions.map(s => `<option>${s}</option>`).join('')}
+      </select>
+    </div>
+  `;
+  document.getElementById('tasks-container').appendChild(div);
+}
+
+function setType(id, hasTicket) {
+  document.getElementById('ticket-fields-' + id).style.display = hasTicket ? 'block' : 'none';
+  document.getElementById('ticket-btn-' + id).classList.toggle('active', hasTicket);
+  document.getElementById('free-btn-' + id).classList.toggle('active', !hasTicket);
+}
+
+function removeTask(id) {
+  const el = document.getElementById('task-' + id);
+  if (el) el.remove();
+}
+
+function generate() {
+  const name = document.getElementById('name').value.trim() || 'Anonymous';
+  const blockers = document.getElementById('blockers').value.trim();
+  const comments = document.getElementById('comments').value.trim();
+  const taskBlocks = document.querySelectorAll('.card');
+
+  if (taskBlocks.length === 0) {
+    alert('Add at least one task.');
+    return;
+  }
+
+  let lines = [];
+  lines.push(`👤 ${name}`);
+  lines.push('');
+  lines.push('📋 Tasks');
+
+  taskBlocks.forEach(block => {
+    const id = block.id.replace('task-', '');
+    const hasTicket = document.getElementById('ticket-btn-' + id).classList.contains('active');
+    const desc = document.getElementById('task-desc-' + id).value.trim();
+    const status = document.getElementById('task-status-' + id).value;
+
+    if (hasTicket) {
+      const num = document.getElementById('ticket-num-' + id).value.trim();
+      const url = document.getElementById('ticket-url-' + id).value.trim();
+      const ticketLabel = num ? `[${num}]` : '';
+      const descLine = [ticketLabel, desc].filter(Boolean).join(' ');
+      lines.push(`• ${descLine || '—'} — ${status}`);
+      if (url) lines.push(`  ${url}`);
+    } else {
+      lines.push(`• ${desc || '—'} — ${status}`);
+    }
+  });
+
+  lines.push('');
+  lines.push('🚧 Blockers');
+  lines.push(blockers || '—');
+  lines.push('');
+  lines.push('💬 Comments');
+  lines.push(comments || '—');
+
+  const text = lines.join('\n');
+  document.getElementById('output').textContent = text;
+  document.getElementById('output-wrap').style.display = 'block';
+  document.getElementById('output-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyText() {
+  const text = document.getElementById('output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy to clipboard`;
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+addTask();
+</script>
+</body>
+</html>
