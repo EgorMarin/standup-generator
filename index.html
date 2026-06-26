@@ -477,7 +477,24 @@ function generate() {
 }
 
 function copyText() {
-  const text = document.getElementById('output').innerText;
+  const outputEl = document.getElementById('output');
+  let lines = [];
+  outputEl.childNodes.forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      lines.push(node.textContent);
+    } else if (node.nodeName === 'DIV') {
+      let text = '';
+      node.childNodes.forEach(child => {
+        if (child.nodeType === Node.TEXT_NODE) {
+          text += child.textContent;
+        } else if (child.nodeName === 'A') {
+          text += `[${child.textContent}](${child.href})`;
+        }
+      });
+      lines.push(text);
+    }
+  });
+  const text = lines.join('\n');
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.getElementById('copy-btn');
     btn.textContent = '✓ Copied!';
